@@ -4,157 +4,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Agriculture Dashboard</title>
+    <title>Smart Agriculture and Irrigation Portal</title>
     <style>
+        * { box-sizing: border-box; }
+
         body {
-            font-family: Arial, sans-serif;
             margin: 0;
+            font-family: Arial, sans-serif;
             background: #f1f6ef;
             color: #263b2b;
         }
+
         header {
             background: #245c3b;
             color: white;
             padding: 22px;
             text-align: center;
         }
-        main {
-            padding: 20px;
-        }
+
+        main { max-width: 1200px; margin: auto; padding: 20px; }
+
         .summary {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 15px;
-            margin-bottom: 20px;
         }
-        .card {
-            background: white;
-            padding: 16px;
-            border-radius: 8px;
-            flex: 1;
-            min-width: 150px;
-        }
-        .panel {
+
+        .card, .panel {
             background: white;
             padding: 18px;
-            border-radius: 8px;
-            overflow-x: auto;
+            border-radius: 9px;
+            margin-bottom: 18px;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 700px;
+
+        .card h3 { font-size: 14px; color: #607466; }
+        .number { font-size: 26px; color: #245c3b; font-weight: bold; }
+
+        select {
+            padding: 9px;
+            margin-bottom: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
+
+        .table-wrap { overflow-x: auto; }
+
+        table { width: 100%; border-collapse: collapse; min-width: 750px; }
+
         th, td {
-            padding: 12px;
-            border-bottom: 1px solid #ddd;
             text-align: left;
+            padding: 11px;
+            border-bottom: 1px solid #ddd;
         }
-        th {
-            background: #e1eee0;
+
+        th { background: #e1eee0; }
+        .alert { color: #b42318; font-weight: bold; }
+        .normal { color: #237447; font-weight: bold; }
+
+        .recommendation {
+            padding: 12px;
+            background: #f1f6ef;
+            border-radius: 6px;
+            margin: 8px 0;
         }
-        .alert {
-            color: #b42318;
-            font-weight: bold;
-        }
-        .normal {
-            color: #237447;
-            font-weight: bold;
-        }
+
+        footer { text-align: center; padding: 15px; color: #607466; }
     </style>
 </head>
 <body>
 
 <header>
     <h1>Smart Agriculture Dashboard</h1>
-    <p>Soil Monitoring and Irrigation Management</p>
+    <p>Irrigation Optimization and Water Resource Analytics</p>
 </header>
 
 <main>
     <section class="summary">
         <div class="card">
             <h3>Fields Monitored</h3>
-            <h2>5</h2>
+            <div class="number" id="fieldCount">5</div>
+        </div>
+        <div class="card">
+            <h3>Total Daily Water Consumption</h3>
+            <div class="number" id="totalWater">0 KL</div>
         </div>
         <div class="card">
             <h3>Fields Requiring Irrigation</h3>
-            <h2 id="alertCount">0</h2>
+            <div class="number" id="irrigationCount">0</div>
+        </div>
+        <div class="card">
+            <h3>Water-Saving Target</h3>
+            <div class="number">15%</div>
         </div>
     </section>
 
     <section class="panel">
-        <h2>Agricultural Field Details</h2>
+        <h2>Field Monitoring</h2>
+
+        <label for="fieldFilter">Filter by field: </label>
+        <select id="fieldFilter" onchange="renderDashboard()">
+            <option value="All">All Fields</option>
+            <option value="F101">F101</option>
+            <option value="F102">F102</option>
+            <option value="F103">F103</option>
+            <option value="F104">F104</option>
+            <option value="F105">F105</option>
+        </select>
+
         <div id="alerts"></div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Field ID</th>
-                    <th>Crop Type</th>
-                    <th>Soil Moisture</th>
-                    <th>Water Consumption (KL)</th>
-                    <th>Temperature</th>
-                    <th>Crop Health</th>
-                    <th>Next Irrigation</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="fieldData"></tbody>
-        </table>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field ID</th>
+                        <th>Crop</th>
+                        <th>Moisture</th>
+                        <th>Water (KL/day)</th>
+                        <th>Temperature</th>
+                        <th>Crop Health</th>
+                        <th>Next Irrigation</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="fieldData"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Irrigation Optimization and Water Analytics</h2>
+        <p id="lowestMoisture"></p>
+        <p id="waterSaving"></p>
+
+        <h3>Prioritized Irrigation Recommendations</h3>
+        <div id="recommendations"></div>
+    </section>
+
+    <section class="panel">
+        <h2>Irrigation Completion Status</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Schedule</th>
+                        <th>Completion Status</th>
+                        <th>Recommended Action</th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleData"></tbody>
+            </table>
+        </div>
     </section>
 </main>
+
+<footer>Academic Demonstration | Simulated Agricultural Sensor Data</footer>
 
 <script>
 const fields = [
     {id:"F101", crop:"Rice", moisture:24, water:120,
-     temp:31, health:"Good", schedule:"Today 06:00 AM"},
+     temp:31, health:"Good", schedule:"Today 06:00 AM", completion:"Pending"},
     {id:"F102", crop:"Wheat", moisture:42, water:80,
-     temp:27, health:"Healthy", schedule:"Tomorrow 06:00 AM"},
+     temp:27, health:"Healthy", schedule:"Tomorrow 06:00 AM", completion:"Completed"},
     {id:"F103", crop:"Tomato", moisture:19, water:65,
-     temp:34, health:"Needs Attention", schedule:"Immediate"},
+     temp:34, health:"Needs Attention", schedule:"Immediate", completion:"Pending"},
     {id:"F104", crop:"Cotton", moisture:35, water:95,
-     temp:30, health:"Healthy", schedule:"Today 05:00 PM"},
+     temp:30, health:"Healthy", schedule:"Today 05:00 PM", completion:"Scheduled"},
     {id:"F105", crop:"Maize", moisture:28, water:90,
-     temp:33, health:"Moderate", schedule:"Today 04:00 PM"}
+     temp:33, health:"Moderate", schedule:"Today 04:00 PM", completion:"Pending"}
 ];
 
-function displayFields() {
-    let alertCount = 0;
+function renderDashboard() {
+    const selected = document.getElementById("fieldFilter").value;
+
+    const visibleFields = fields.filter(field =>
+        selected === "All" || field.id === selected
+    );
+
+    const totalWater = fields.reduce((sum, field) =>
+        sum + field.water, 0
+    );
+
+    const urgentFields = fields.filter(field => field.moisture < 30);
+
+    document.getElementById("fieldCount").textContent = fields.length;
+    document.getElementById("totalWater").textContent = totalWater + " KL";
+    document.getElementById("irrigationCount").textContent = urgentFields.length;
+
+    document.getElementById("alerts").innerHTML =
+        visibleFields.filter(field => field.moisture < 30)
+        .map(field =>
+            `<p class="alert">Alert: ${field.id} has only
+             ${field.moisture}% soil moisture. Irrigation required.</p>`
+        ).join("") ||
+        '<p class="normal">No irrigation alerts for the selected field.</p>';
 
     document.getElementById("fieldData").innerHTML =
-        fields.map(field => {
-            const needsWater = field.moisture < 30;
-
-            if (needsWater) alertCount++;
+        visibleFields.map(field => {
+            const urgent = field.moisture < 30;
 
             return `
                 <tr>
                     <td>${field.id}</td>
                     <td>${field.crop}</td>
-                    <td class="${needsWater ? 'alert' : 'normal'}">
-                        ${field.moisture}%
-                    </td>
+                    <td class="${urgent ? 'alert' : 'normal'}">${field.moisture}%</td>
                     <td>${field.water}</td>
                     <td>${field.temp}°C</td>
                     <td>${field.health}</td>
                     <td>${field.schedule}</td>
-                    <td class="${needsWater ? 'alert' : 'normal'}">
-                        ${needsWater ? 'Irrigation Required' : 'Normal'}
+                    <td class="${urgent ? 'alert' : 'normal'}">
+                        ${urgent ? 'Irrigation Required' : 'Normal'}
                     </td>
                 </tr>`;
         }).join("");
 
-    document.getElementById("alertCount").textContent = alertCount;
+    const lowest = [...fields].sort((a, b) =>
+        a.moisture - b.moisture
+    )[0];
 
-    document.getElementById("alerts").innerHTML =
-        fields.filter(field => field.moisture < 30)
-        .map(field =>
-            `<p class="alert">Alert: ${field.id} soil moisture is
-             ${field.moisture}%. Irrigation is required.</p>`
-        ).join("");
+    document.getElementById("lowestMoisture").textContent =
+        `Lowest soil moisture: ${lowest.id} (${lowest.moisture}%) — ${lowest.crop}.`;
+
+    document.getElementById("waterSaving").textContent =
+        `Total daily water consumption: ${totalWater} KL. ` +
+        `15% water-saving target: ${(totalWater * 0.15).toFixed(1)} KL/day.`;
+
+    document.getElementById("recommendations").innerHTML =
+        [...fields].sort((a, b) => a.moisture - b.moisture)
+        .map(field => {
+            let priority;
+            if (field.moisture < 30) {
+                priority = "High Priority — Irrigate promptly";
+            } else if (field.moisture < 35) {
+                priority = "Medium Priority — Check and schedule irrigation";
+            } else {
+                priority = "Low Priority — Continue monitoring";
+            }
+
+            return `<div class="recommendation">
+                <strong>${field.id} — ${field.crop}:</strong> ${priority}
+            </div>`;
+        }).join("");
+
+    document.getElementById("scheduleData").innerHTML =
+        visibleFields.map(field => `
+            <tr>
+                <td>${field.id}</td>
+                <td>${field.schedule}</td>
+                <td>${field.completion}</td>
+                <td>${field.moisture < 30 ?
+                    "Prioritize irrigation" : "Monitor soil conditions"}</td>
+            </tr>
+        `).join("");
 }
 
-displayFields();
+renderDashboard();
 </script>
 
 </body>
