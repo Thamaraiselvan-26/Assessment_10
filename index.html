@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Agriculture Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f1f6ef;
+            color: #263b2b;
+        }
+        header {
+            background: #245c3b;
+            color: white;
+            padding: 22px;
+            text-align: center;
+        }
+        main {
+            padding: 20px;
+        }
+        .summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            flex: 1;
+            min-width: 150px;
+        }
+        .panel {
+            background: white;
+            padding: 18px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background: #e1eee0;
+        }
+        .alert {
+            color: #b42318;
+            font-weight: bold;
+        }
+        .normal {
+            color: #237447;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Smart Agriculture Dashboard</h1>
+    <p>Soil Monitoring and Irrigation Management</p>
+</header>
+
+<main>
+    <section class="summary">
+        <div class="card">
+            <h3>Fields Monitored</h3>
+            <h2>5</h2>
+        </div>
+        <div class="card">
+            <h3>Fields Requiring Irrigation</h3>
+            <h2 id="alertCount">0</h2>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Agricultural Field Details</h2>
+        <div id="alerts"></div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Field ID</th>
+                    <th>Crop Type</th>
+                    <th>Soil Moisture</th>
+                    <th>Water Consumption (KL)</th>
+                    <th>Temperature</th>
+                    <th>Crop Health</th>
+                    <th>Next Irrigation</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="fieldData"></tbody>
+        </table>
+    </section>
+</main>
+
+<script>
+const fields = [
+    {id:"F101", crop:"Rice", moisture:24, water:120,
+     temp:31, health:"Good", schedule:"Today 06:00 AM"},
+    {id:"F102", crop:"Wheat", moisture:42, water:80,
+     temp:27, health:"Healthy", schedule:"Tomorrow 06:00 AM"},
+    {id:"F103", crop:"Tomato", moisture:19, water:65,
+     temp:34, health:"Needs Attention", schedule:"Immediate"},
+    {id:"F104", crop:"Cotton", moisture:35, water:95,
+     temp:30, health:"Healthy", schedule:"Today 05:00 PM"},
+    {id:"F105", crop:"Maize", moisture:28, water:90,
+     temp:33, health:"Moderate", schedule:"Today 04:00 PM"}
+];
+
+function displayFields() {
+    let alertCount = 0;
+
+    document.getElementById("fieldData").innerHTML =
+        fields.map(field => {
+            const needsWater = field.moisture < 30;
+
+            if (needsWater) alertCount++;
+
+            return `
+                <tr>
+                    <td>${field.id}</td>
+                    <td>${field.crop}</td>
+                    <td class="${needsWater ? 'alert' : 'normal'}">
+                        ${field.moisture}%
+                    </td>
+                    <td>${field.water}</td>
+                    <td>${field.temp}°C</td>
+                    <td>${field.health}</td>
+                    <td>${field.schedule}</td>
+                    <td class="${needsWater ? 'alert' : 'normal'}">
+                        ${needsWater ? 'Irrigation Required' : 'Normal'}
+                    </td>
+                </tr>`;
+        }).join("");
+
+    document.getElementById("alertCount").textContent = alertCount;
+
+    document.getElementById("alerts").innerHTML =
+        fields.filter(field => field.moisture < 30)
+        .map(field =>
+            `<p class="alert">Alert: ${field.id} soil moisture is
+             ${field.moisture}%. Irrigation is required.</p>`
+        ).join("");
+}
+
+displayFields();
+</script>
+
+</body>
+</html>
